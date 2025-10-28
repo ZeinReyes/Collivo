@@ -4,17 +4,21 @@ import { AuthContext } from "./contexts/authContext";
 import VerifyEmailPage from "./pages/authentication/verifyEmailPage";
 
 // Import pages
+// Authentication
 import LoginPage from "./pages/authentication/loginPage";
 import RegisterPage from "./pages/authentication/registerPage";
 import ForgotPasswordPage from "./pages/authentication/forgotPasswordPage";
 import ResetPasswordPage from "./pages/authentication/resetPasswordPage";
+//Admin
 import AdminPage from "./pages/admin/adminPage";
+// User
+import HomePage from "./pages/user/homePage"
 
 // Others
 import "bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap/dist/js/bootstrap.bundle.min.js";
+import { Home } from "lucide-react";
 
-// ✅ Protected Route Component
 function ProtectedRoute({ element, allowedRoles }) {
   const { user, loading } = useContext(AuthContext);
 
@@ -42,6 +46,7 @@ function App() {
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
       <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
       <Route path="/verify-email" element={<VerifyEmailPage />} />
+      <Route path="/home" element={<HomePage />} />
 
       <Route
         path="/admin"

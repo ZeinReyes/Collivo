@@ -45,7 +45,7 @@ function ResetPasswordPage() {
         className="authenticationForm d-flex justify-content-center align-items-center flex-column"
         onSubmit={handleSubmit}
       >
-        <img src="/logo.png" alt="Logo" />
+        <img src="images/logo.png" alt="Logo" />
         <h1>Reset Password</h1>
 
         <label>New Password</label>

@@ -3,7 +3,7 @@ import axios from 'axios';
 const API_BASE_URL = 'http://localhost:5000/api/auth';
 
 export const login = async ({ usernameOrEmail, password }) => {
-    console.log("📤 Sending login request with:", { usernameOrEmail });
+    console.log("Sending login request with:", { usernameOrEmail });
 
     try {
         const response = await axios.post(`${API_BASE_URL}/login`, { usernameOrEmail, password });

@@ -53,7 +53,14 @@ function RegisterPage() {
         className="authenticationForm d-flex justify-content-center align-items-center flex-column"
         onSubmit={handleSubmit}
       >
-        <img src="logo.png" alt="Logo" />
+        <img
+          src="images/logo.png"
+          alt="Logo"
+          style={{
+            height: '60px',
+            width: 'auto',
+          }}
+        />
         <h1>Register</h1>
 
         <label>Full Name</label>

@@ -28,7 +28,6 @@ function VerifyEmailPage() {
       alert(res.data.message || 'Email verified successfully!');
       const { user, token } = res.data;
 
-      // Auto login user
       localStorage.setItem('token', token);
       localStorage.setItem('user', JSON.stringify(user));
 
@@ -49,7 +48,7 @@ function VerifyEmailPage() {
         className="authenticationForm d-flex justify-content-center align-items-center flex-column"
         onSubmit={handleSubmit}
       >
-        <img src="logo.png" alt="Logo" />
+        <img src="images/logo.png" alt="Logo" />
         <h1>Verify Email</h1>
         <p>Enter the 6-digit code sent to <b>{email}</b></p>
 

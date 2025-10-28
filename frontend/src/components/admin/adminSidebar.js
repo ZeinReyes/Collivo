@@ -13,7 +13,6 @@ function Sidebar() {
         <li className="active">
           <Users size={18} /> Users
         </li>
-        {/* future nav items can go here */}
       </ul>
     </div>
   );

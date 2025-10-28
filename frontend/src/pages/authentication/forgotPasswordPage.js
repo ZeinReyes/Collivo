@@ -30,7 +30,7 @@ function ForgotPasswordPage() {
         className="authenticationForm d-flex justify-content-center align-items-center flex-column"
         onSubmit={handleSubmit}
       >
-        <img src="/logo.png" alt="Logo" />
+        <img src="images/logo.png" alt="Logo" />
         <h1>Forgot Password</h1>
 
         <p className="text-center note mb-3 text-decoration-none">

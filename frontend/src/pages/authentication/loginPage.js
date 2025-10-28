@@ -18,25 +18,23 @@ function LoginPage() {
       const res = await loginService({ usernameOrEmail, password });
       const { user, token } = res.data;
 
-      // 🔹 If user not verified
       if (!user.isEmailVerified) {
         alert('Please verify your email before logging in.');
         navigate('/verify-email', { state: { email: user.email } });
         return;
       }
 
-      // 🔹 Login and redirect based on role
       login(user, token);
 
       if (user.role === 'Admin') navigate('/admin');
-      else navigate('/dashboard');
+      else navigate('/home');
     } catch (err) {
       const resData = err.response?.data;
       const message = resData?.message || resData?.error || 'Login failed. Please try again.';
     
       alert(message);
     
-      // 🔹 Handle email not verified case
+      //Redirect to verify email page when not yet verified
       if (resData?.redirect === '/verify-email' && resData?.userId) {
         try {
           const userRes = await axios.get(`http://localhost:5000/api/users/${resData.userId}`);
@@ -56,7 +54,7 @@ function LoginPage() {
         className="authenticationForm d-flex justify-content-center align-items-center flex-column"
         onSubmit={handleSubmit}
       >
-        <img src="logo.png" alt="Logo" />
+        <img src="images/logo.png" alt="Logo" />
         <h1>Login</h1>
 
         <label>Email or Username</label>

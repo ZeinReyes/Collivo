@@ -65,7 +65,7 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
-    // INITIALIZE USER ON APP LOAD
+    // INITIALIZE USER
     useEffect(() => {
         const initializeUser = async () => {
             const token = localStorage.getItem("token");

@@ -7,7 +7,7 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-// 📩 Helper to send emails
+//Helper for sending email
 const transporter = nodemailer.createTransport({
     service: 'Gmail',
     auth: {
@@ -16,7 +16,7 @@ const transporter = nodemailer.createTransport({
     },
 });
 
-// 🔹 REGISTER with email verification
+//Register function with email verification
 export const register = async (req, res) => {
     const { fullName, username, email, password } = req.body;
 
@@ -39,7 +39,7 @@ export const register = async (req, res) => {
             email,
             password: hashedPassword,
             emailVerificationCode: verificationCode,
-            emailVerificationExpiry: Date.now() + 10 * 60 * 1000 // 10 mins
+            emailVerificationExpiry: Date.now() + 10 * 60 * 1000
         });
 
         await newUser.save();
@@ -70,34 +70,28 @@ export const register = async (req, res) => {
     }
 };
 
-// 🔹 VERIFY EMAIL (by email instead of userId)
+//Email Verification function
 export const verifyEmail = async (req, res) => {
     const { email, code } = req.body;
 
     try {
-        // Check if user exists by email
         const user = await User.findOne({ email });
         if (!user) return res.status(404).json({ message: 'User not found' });
 
-        // Already verified
         if (user.isEmailVerified)
             return res.status(400).json({ message: 'Email already verified' });
 
-        // Code mismatch
         if (user.emailVerificationCode !== code)
             return res.status(400).json({ message: 'Invalid verification code' });
 
-        // Expired code
         if (user.emailVerificationExpiry < Date.now())
             return res.status(400).json({ message: 'Verification code expired' });
 
-        // ✅ Mark email as verified
         user.isEmailVerified = true;
         user.emailVerificationCode = undefined;
         user.emailVerificationExpiry = undefined;
         await user.save();
 
-        // Generate JWT
         const token = jwt.sign(
             { id: user._id, role: user.role },
             process.env.JWT_SECRET,
@@ -121,7 +115,7 @@ export const verifyEmail = async (req, res) => {
     }
 };
 
-// 🔹 LOGIN (check if verified)
+//Login function
 export const login = async (req, res) => {
     const { usernameOrEmail, password } = req.body;
 
@@ -167,7 +161,7 @@ export const login = async (req, res) => {
     }
 };
 
-// 🔹 RESEND VERIFICATION CODE
+//Resend verification code
 export const resendVerification = async (req, res) => {
     const { userId } = req.body;
 

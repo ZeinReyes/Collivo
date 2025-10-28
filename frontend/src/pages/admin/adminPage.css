@@ -13,7 +13,7 @@
   background-color: #f3f6fc;
 }
 
-/* -------------------- SIDEBAR -------------------- */
+/* Sidebar */
 .sidebar {
   width: 260px;
   background-color: #1e3a8a;
@@ -64,7 +64,7 @@
   transform: scale(1.02);
 }
 
-/* -------------------- MAIN CONTENT -------------------- */
+/* Main Content */
 .mainContent {
   flex: 1;
   display: flex;
@@ -72,7 +72,7 @@
   background-color: #f3f6fc;
 }
 
-/* -------------------- TOP NAVBAR -------------------- */
+/* Navbar */
 .topNavbar {
   height: 70px;
   background-color: #ffffff;
@@ -109,7 +109,7 @@
   transform: translateY(-2px);
 }
 
-/* -------------------- CONTENT AREA -------------------- */
+/* Page Content */
 .contentArea {
   flex: 1;
   padding: 2rem;
@@ -121,7 +121,7 @@
   margin-bottom: 1.5rem;
 }
 
-/* -------------------- TABLE -------------------- */
+/* User List table */
 .userTableContainer {
   background: #ffffff;
   border-radius: 16px;
@@ -155,7 +155,7 @@
   background-color: #f9fafb;
 }
 
-/* -------------------- BUTTONS -------------------- */
+/* Buttons */
 .editBtn,
 .deleteBtn,
 .saveBtn {
