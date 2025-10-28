@@ -1,0 +1,126 @@
+@import url('https://fonts.googleapis.com/css2?family=Ovo&display=swap');
+
+* {
+    padding: 0;
+    margin: 0;
+    box-sizing: border-box;
+    font-family: 'Ovo', serif;
+}
+
+.authenticationContainer {
+    width: 100%;
+    height: 100vh;
+    background: linear-gradient(135deg, #00264C, #004A8F);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.authenticationForm {
+    width: 500px;
+    background-color: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0px 8px 24px rgba(0, 0, 0, 0.15);
+    padding: 2rem 2.5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transition: all 0.3s ease;
+}
+
+.authenticationForm img {
+    width: 80px;
+    height: auto;
+    margin-bottom: 1rem;
+}
+
+.authenticationForm h1 {
+    color: #00264C;
+    margin-bottom: 1.5rem;
+    font-size: 1.8rem;
+    font-weight: 600;
+}
+
+.authenticationForm label {
+    width: 100%;
+    color: #333;
+    font-weight: 500;
+    margin-bottom: 0.3rem;
+    font-size: 0.95rem;
+}
+
+.inputField {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    margin-bottom: 1.2rem;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    outline: none;
+    font-size: 0.95rem;
+    transition: border 0.3s ease;
+}
+
+.inputField:focus {
+    border-color: #004A8F;
+    box-shadow: 0 0 4px rgba(0, 74, 143, 0.2);
+}
+
+.forgotPassword {
+    width: 100%;
+    text-align: right;
+    margin-bottom: 1.5rem;
+}
+
+.note {
+    color: #004A8F;
+    text-decoration: none;
+    font-size: 0.9rem;
+    transition: color 0.2s ease;
+}
+
+.note:hover {
+    color: #00264C;
+    text-decoration: underline;
+}
+
+.sign-in_btn {
+    width: 100%;
+    background-color: #004A8F;
+    color: white;
+    font-weight: 600;
+    padding: 0.8rem 1rem;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1rem;
+    margin-bottom: 1.2rem;
+    transition: background 0.3s ease, transform 0.2s ease;
+}
+
+.sign-in_btn:hover {
+    background-color: #00376B;
+    transform: translateY(-2px);
+}
+
+.sign-in_footer {
+    text-align: center;
+    font-size: 0.9rem;
+    color: #333;
+}
+
+.sign-in_footer a {
+    color: #004A8F;
+    font-weight: 500;
+}
+
+.sign-in_footer a:hover {
+    text-decoration: underline;
+}
+
+/* Responsiveness */
+@media (max-width: 480px) {
+    .authenticationForm {
+        width: 90%;
+        padding: 1.5rem;
+    }
+}
