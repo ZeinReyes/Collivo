@@ -1,0 +1,157 @@
+* {
+    padding: 0;
+    margin: 0;
+    box-sizing: border-box;
+}
+
+.aboutContainer {
+    width: 100%;
+    height: auto;
+    margin-top: 70px;
+}
+
+.aboutHeader {
+  position: relative;
+  width: 100%;
+  height: 300px;
+  background-image: url('../../../public/images/aboutHeader.png');
+  background-size: cover;
+  background-position: center center;
+  color: #fff;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  flex-direction: column;
+}
+
+.aboutHeader::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.2);
+  z-index: 0;
+}
+
+.aboutHeader * {
+  position: relative;
+  z-index: 1;
+}
+
+.ourStory {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: start;
+  background-color: #fafafa;
+  color: #111;
+  padding: 4rem 6rem;
+  gap: 3rem;
+}
+
+.story-left {
+  flex: 1;
+  min-width: 300px;
+}
+
+.story-subtitle {
+  color: #838282;
+  font-size: 0.9rem;
+  letter-spacing: 1px;
+  margin-bottom: 1rem;
+}
+
+.story-left h2 {
+  font-size: 2rem;
+  line-height: 1.4;
+  font-weight: 700;
+}
+
+.story-left h2 span {
+  color: #1e3a8a;
+}
+
+.story-main-img {
+  width: 100%;
+  border-radius: 10px;
+  margin-top: 1.5rem;
+}
+
+.story-right {
+  flex: 1;
+  min-width: 300px;
+}
+
+.story-images {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.story-images img {
+  width: 48%;
+  border-radius: 10px;
+}
+
+.story-text {
+  margin-top: 1.5rem;
+  color: #111;
+  line-height: 1.6;
+  font-size: 0.95rem;
+}
+
+.story-text span {
+    color: #1e3a8a;
+}
+
+.story-stats {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 2rem;
+  margin-top: 2rem;
+  background-color: #1e3a8a;
+  border-radius: 20px;
+}
+
+.story-stats div h3 {
+  color: #fff;
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.story-stats div p {
+  color: #aaa;
+  font-size: 0.9rem;
+}
+
+.story-intro {
+  display: flex;
+  align-items: center;
+  margin-top: 2rem;
+  gap: 1rem;
+}
+
+.story-avatars img {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 2px solid #1e3a8a;
+  margin-left: -10px;
+}
+
+.intro-btn {
+  border: 1px solid #1e3a8a;
+  background: transparent;
+  color: #1e3a8a;
+  border-radius: 50px;
+  padding: 0.6rem 1.2rem;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.intro-btn:hover {
+  background: #1e3a8a;
+  color: #fafafa;
+}

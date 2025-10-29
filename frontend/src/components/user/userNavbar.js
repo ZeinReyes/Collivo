@@ -78,7 +78,7 @@ const Navbar = () => {
             </button>
             <button
               className="btn btn-primary"
-              style={{  color: '#fff', background: '#1e3a8a' }}
+              style={{  color: '#fff', background: '#1e3a8a', border: 'none' }}
               onClick={() => navigate('/register')}
             >
               Sign Up

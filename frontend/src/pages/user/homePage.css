@@ -41,6 +41,17 @@
   gap: 1rem;
 }
 
+.hero-buttons .button:nth-child(1) {
+  background-color: #1e3a8a;
+  color: #fff;
+}
+
+.hero-buttons .button:nth-child(2) {
+  background-color: transparent;
+  color: #1e3a8a;
+  border: 1px solid #1e3a8a;
+}
+
 .hero-buttons .btn {
   padding: 0.7rem 1.6rem;
   border-radius: 6px;
@@ -80,6 +91,10 @@
   top: 80px;
   right: -80px;
   z-index: 2;
+}
+
+.highlight {
+  color: #1e3a8a;
 }
 
 @media (max-width: 992px) {

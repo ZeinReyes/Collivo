@@ -4,7 +4,7 @@ import "bootstrap/dist/css/bootstrap.min.css";
 function Footer() {
   return (
     <footer
-      className="text-light pt-5 pb-3 mt-5"
+      className="text-light pt-5 pb-3"
       style={{ backgroundColor: "#00264C" }}
     >
       <div className="container">
@@ -20,8 +20,8 @@ function Footer() {
           <div className="col-6 col-md-2">
             <h6 className="fw-semibold mb-3">Company</h6>
             <ul className="list-unstyled">
-              <li><a href="#" className="text-light text-decoration-none opacity-75">About</a></li>
-              <li><a href="#" className="text-light text-decoration-none opacity-75">Contact</a></li>
+              <li><a href="/about" className="text-light text-decoration-none opacity-75">About</a></li>
+              <li><a href="/contact" className="text-light text-decoration-none opacity-75">Contact</a></li>
             </ul>
           </div>
 

@@ -13,6 +13,8 @@ import ResetPasswordPage from "./pages/authentication/resetPasswordPage";
 import AdminPage from "./pages/admin/adminPage";
 // User
 import HomePage from "./pages/user/homePage"
+import AboutPage from "./pages/user/aboutPage";
+import ContactPage from "./pages/user/contactPage";
 
 // Others
 import "bootstrap/dist/css/bootstrap.min.css";
@@ -47,6 +49,8 @@ function App() {
       <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
       <Route path="/verify-email" element={<VerifyEmailPage />} />
       <Route path="/home" element={<HomePage />} />
+      <Route path="/about" element={<AboutPage />} />
+      <Route path="/contact" element={<ContactPage />} />
 
       <Route
         path="/admin"

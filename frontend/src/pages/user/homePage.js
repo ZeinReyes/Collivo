@@ -10,14 +10,14 @@ function HomePage() {
 
       <main className="hero-section">
         <div className="hero-content">
-          <h1>Collaboration that actually flows.</h1>
+          <h1>Collaboration that actually <span className='highlight'>flows.</span></h1>
           <p>
-            Simplify teamwork with Collivo — where tasks, teams, and communication unite 
+            Simplify teamwork with <span className='highlight'>Collivo</span> — where tasks, teams, and communication unite 
             into one powerful workspace.
           </p>
           <div className="hero-buttons">
-            <button className="btn btn-primary">Get Started</button>
-            <button className="btn btn-outline-primary">Learn More</button>
+            <button className="button btn">Get Started</button>
+            <button className="button btn">Learn More</button>
           </div>
         </div>
 
@@ -27,7 +27,7 @@ function HomePage() {
         </div>
       </main>
 
-      <section className="features-section">
+      <section className="features-section mb-5">
         <div className="features-header">
           <h2>Powerful tools for modern collaboration</h2>
           <p>
