@@ -123,3 +123,26 @@ export const getUserById = async (req, res) => {
         res.status(500).json({ error: "Server error" });
     }
 };
+
+export const searchUsers = async (req, res) => {
+  try {
+    const { query } = req.query;
+
+    if (!query) return res.status(200).json([]);
+
+    const users = await User.find({
+      $or: [
+        { fullName: { $regex: query, $options: "i" } },
+        { username: { $regex: query, $options: "i" } },
+        { email: { $regex: query, $options: "i" } },
+      ],
+    })
+      .limit(10)
+      .select("fullName username email");
+
+    res.status(200).json(users);
+  } catch (error) {
+    console.error("Error searching users:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};

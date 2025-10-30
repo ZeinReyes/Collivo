@@ -20,6 +20,8 @@ import ContactPage from "./pages/landing page/contactPage";
 // User (Project Management)
 import ProjectManagement from "./pages/user/projectManagementPage";
 import Dashboard from "./pages/user/dashboardPage";
+import ProjectsPage from "./pages/user/projectPage";
+import AcceptInvite from "./components/user/acceptInvite"
 
 // Others
 import "bootstrap/dist/css/bootstrap.min.css";
@@ -68,6 +70,8 @@ function App() {
       {/* Project Management */}
       <Route path="/project-management" element={<ProjectManagement />}>
         <Route index element={<Dashboard />} /> {/* default */}
+        <Route path="projects" element={<ProjectsPage />} />
+        <Route path="invites/:inviteId" element={<AcceptInvite />} />
       </Route>
     </Routes>
   );
