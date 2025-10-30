@@ -20,9 +20,13 @@ app.use(express.json());
 
 import userRoute from "./src/routes/userRoutes.js";
 import authRoute from "./src/routes/authRoutes.js";
+import contactRoute from "./src/routes/contactRoutes.js";
+import projectRoute from "./src/routes/projectRotes.js"
 
 app.use("/api/users", userRoute);
 app.use("/api/auth", authRoute);
+app.use("/api/contact", contactRoute);
+app.use("/api/project", projectRoute);
 
 mongoose
   .connect(process.env.MONGO_URI, {})

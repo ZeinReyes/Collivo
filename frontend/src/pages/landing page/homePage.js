@@ -1,6 +1,6 @@
 import React from 'react';
-import Navbar from '../../components/user/userNavbar';
-import Footer from '../../components/user/userFooter';
+import Navbar from '../../components/landing page/userNavbar';
+import Footer from '../../components/landing page/userFooter';
 import './homePage.css';
 
 function HomePage() {

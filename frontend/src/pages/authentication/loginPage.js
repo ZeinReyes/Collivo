@@ -27,6 +27,7 @@ function LoginPage() {
       login(user, token);
 
       if (user.role === 'Admin') navigate('/admin');
+      else if (user.role === 'User') navigate('/project-management');
       else navigate('/home');
     } catch (err) {
       const resData = err.response?.data;

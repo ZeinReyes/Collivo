@@ -47,9 +47,8 @@
 }
 
 .hero-buttons .button:nth-child(2) {
-  background-color: transparent;
-  color: #1e3a8a;
-  border: 1px solid #1e3a8a;
+  background-color: #f87171;
+  color: #fff;
 }
 
 .hero-buttons .btn {
@@ -95,6 +94,7 @@
 
 .highlight {
   color: #1e3a8a;
+  font-weight: 600;
 }
 
 @media (max-width: 992px) {

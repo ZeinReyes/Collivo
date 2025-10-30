@@ -1,6 +1,6 @@
 import React from 'react';
-import Navbar from '../../components/user/userNavbar';
-import Footer from "../../components/user/userFooter";
+import Navbar from '../../components/landing page/userNavbar';
+import Footer from "../../components/landing page/userFooter";
 import './aboutPage.css';
 
 function AboutPage() {
@@ -34,7 +34,7 @@ function AboutPage() {
             <img src='https://managersandleaders.com.au/wp-content/uploads/2025/09/immediate_impact_leadership-1024x683.jpg' alt='Tech Blog 2' />
           </div>
           <p className='story-text'>
-            At <span>Collivo</span>, we simplify the way teams plan, collaborate, and deliver projects. Our platform empowers organizations to stay aligned, manage resources efficiently, and achieve goals faster. With intuitive tools for task tracking, communication, and progress visualization, we help teams transform ideas into successful outcomes.
+            At <span className='highlight'>Collivo</span>, we simplify the way teams plan, collaborate, and deliver projects. Our platform empowers organizations to stay aligned, manage resources efficiently, and achieve goals faster. With intuitive tools for task tracking, communication, and progress visualization, we help teams transform ideas into successful outcomes.
           </p>
 
           <div className='story-stats'>

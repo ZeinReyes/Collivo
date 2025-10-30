@@ -6,6 +6,7 @@
   
   .nav-link:hover {
     color: #1e3a8a !important;
+    transform: translateY(-2px);
   }
   
   .active-link {

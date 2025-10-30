@@ -3,34 +3,34 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import { AuthContext } from "./contexts/authContext";
 import VerifyEmailPage from "./pages/authentication/verifyEmailPage";
 
-// Import pages
 // Authentication
 import LoginPage from "./pages/authentication/loginPage";
 import RegisterPage from "./pages/authentication/registerPage";
 import ForgotPasswordPage from "./pages/authentication/forgotPasswordPage";
 import ResetPasswordPage from "./pages/authentication/resetPasswordPage";
-//Admin
+
+// Admin
 import AdminPage from "./pages/admin/adminPage";
-// User
-import HomePage from "./pages/user/homePage"
-import AboutPage from "./pages/user/aboutPage";
-import ContactPage from "./pages/user/contactPage";
+
+// Landing
+import HomePage from "./pages/landing page/homePage";
+import AboutPage from "./pages/landing page/aboutPage";
+import ContactPage from "./pages/landing page/contactPage";
+
+// User (Project Management)
+import ProjectManagement from "./pages/user/projectManagementPage";
+import Dashboard from "./pages/user/dashboardPage";
 
 // Others
 import "bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap/dist/js/bootstrap.bundle.min.js";
-import { Home } from "lucide-react";
 
 function ProtectedRoute({ element, allowedRoles }) {
   const { user, loading } = useContext(AuthContext);
 
-  if (loading) {
-    return <div>Loading...</div>;
-  }
+  if (loading) return <div>Loading...</div>;
 
-  if (!user) {
-    return <Navigate to="/login" replace />;
-  }
+  if (!user) return <Navigate to="/login" replace />;
 
   if (allowedRoles && !allowedRoles.includes(user.role)) {
     return <Navigate to="/admin" replace />;
@@ -42,22 +42,33 @@ function ProtectedRoute({ element, allowedRoles }) {
 function App() {
   return (
     <Routes>
-      <Route path="/" element={<Navigate to="/login" replace />} />
+      {/* Default redirect */}
+      <Route path="/" element={<Navigate to="/home" replace />} />
+
+      {/* Auth Routes */}
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
       <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
       <Route path="/verify-email" element={<VerifyEmailPage />} />
+
+      {/* Landing Pages */}
       <Route path="/home" element={<HomePage />} />
       <Route path="/about" element={<AboutPage />} />
       <Route path="/contact" element={<ContactPage />} />
 
+      {/* Admin Page */}
       <Route
         path="/admin"
         element={
           <ProtectedRoute element={<AdminPage />} allowedRoles={["Admin"]} />
         }
       />
+
+      {/* Project Management */}
+      <Route path="/project-management" element={<ProjectManagement />}>
+        <Route index element={<Dashboard />} /> {/* default */}
+      </Route>
     </Routes>
   );
 }
