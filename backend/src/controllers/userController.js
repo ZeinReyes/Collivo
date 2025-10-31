@@ -1,4 +1,5 @@
 import User from "../models/userModel.js";
+import Project from "../models/projectModel.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 
@@ -126,11 +127,26 @@ export const getUserById = async (req, res) => {
 
 export const searchUsers = async (req, res) => {
   try {
-    const { query } = req.query;
+    const { query, projectId } = req.query;
 
     if (!query) return res.status(200).json([]);
 
+    let excludedUserIds = [];
+
+    // 🧩 Exclude members & creator of the project if projectId is provided
+    if (projectId) {
+      const project = await Project.findById(projectId).select("members createdBy");
+      if (project) {
+        excludedUserIds = [
+          project.createdBy.toString(),
+          ...project.members.map((id) => id.toString()),
+        ];
+      }
+    }
+
+    // 🔍 Search users not in excludedUserIds
     const users = await User.find({
+      _id: { $nin: excludedUserIds },
       $or: [
         { fullName: { $regex: query, $options: "i" } },
         { username: { $regex: query, $options: "i" } },

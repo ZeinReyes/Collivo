@@ -20,8 +20,14 @@ import ContactPage from "./pages/landing page/contactPage";
 // User (Project Management)
 import ProjectManagement from "./pages/user/projectManagementPage";
 import Dashboard from "./pages/user/dashboardPage";
-import ProjectsPage from "./pages/user/projectPage";
+import ProjectsList from "./pages/user/projectLists";
 import AcceptInvite from "./components/user/acceptInvite"
+
+// Project
+import ProjectPage from "./pages/project/projectPage";
+import OverviewPage from "./pages/project/overviewPage";
+import MembersPage from "./pages/project/membersPage";
+import TasksPage from "./pages/project/tasksPage";
 
 // Others
 import "bootstrap/dist/css/bootstrap.min.css";
@@ -70,10 +76,18 @@ function App() {
       {/* Project Management */}
       <Route path="/project-management" element={<ProjectManagement />}>
         <Route index element={<Dashboard />} /> {/* default */}
-        <Route path="projects" element={<ProjectsPage />} />
+        <Route path="projects" element={<ProjectsList />} />
+
+        <Route path="projects/:id" element={<ProjectPage />}>
+          <Route index element={<OverviewPage />} />
+          <Route path="members" element={<MembersPage />} />
+          <Route path="tasks/*" element={<TasksPage />} />
+        </Route>
+
         <Route path="invites/:inviteId" element={<AcceptInvite />} />
       </Route>
     </Routes>
+    
   );
 }
 

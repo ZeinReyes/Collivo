@@ -68,7 +68,7 @@
 /* === Top Navbar === */
 .pm-topbar {
   background-color: white;
-  box-shadow: 0 5px 5px rgba(0,0,0,0.5);
+  box-shadow: 0 4px 5px rgba(0,0,0,0.05);
   padding: 1rem 1.5rem;
   display: flex;
   justify-content: space-between;

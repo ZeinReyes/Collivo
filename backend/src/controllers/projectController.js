@@ -1,5 +1,6 @@
 import Project from "../models/projectModel.js";
 import User from "../models/userModel.js";
+import Invite from "../models/inviteModel.js";
 
 // ======================
 // 📌 Create a new project
@@ -143,8 +144,13 @@ export const deleteProject = async (req, res) => {
       return res.status(403).json({ message: "Only the creator can delete this project." });
     }
 
+    // Delete all invites related to this project
+    await Invite.deleteMany({ project: req.params.id });
+
+    // Delete the project
     await project.deleteOne();
-    res.status(200).json({ message: "Project deleted successfully." });
+    
+    res.status(200).json({ message: "Project and related invites deleted successfully." });
   } catch (error) {
     console.error("Error deleting project:", error);
     res.status(500).json({ message: "Server error." });

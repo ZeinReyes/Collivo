@@ -1,86 +1,149 @@
-import React, { useState, useEffect } from "react";
-import { Modal, Button, Form, ListGroup, Badge } from "react-bootstrap";
+import React, { useState, useEffect, useContext } from "react";
+import { Modal, Button, Form, ListGroup, Badge, Spinner } from "react-bootstrap";
 import api from "../../api/api";
+import { AuthContext } from "../../contexts/authContext";
+import { useToast } from "../../hooks/useToast";
 
 function InviteMembersModal({ show, handleClose, projectId }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [suggestions, setSuggestions] = useState([]);
   const [selectedUsers, setSelectedUsers] = useState([]);
+  const [loading, setLoading] = useState(false);
 
-  // 🔍 Fetch suggestions as user types
+  const { user } = useContext(AuthContext);
+  const { addToast } = useToast(); 
+
   useEffect(() => {
     const fetchSuggestions = async () => {
-      if (!searchTerm.trim()) return setSuggestions([]);
+      if (!searchTerm.trim()) {
+        setSuggestions([]);
+        return;
+      }
+
       try {
-        const res = await api.get(`/users/search?query=${searchTerm}`);
-        setSuggestions(res.data);
+        const res = await api.get(
+          `/users/search?query=${encodeURIComponent(searchTerm)}&projectId=${projectId}`
+        );
+        let data = res.data || [];
+
+        const filtered = data.filter(
+          (u) =>
+            !selectedUsers.some(
+              (s) => s._id === u._id || s.id === u.id || s.email === u.email
+            )
+        );
+
+        setSuggestions(filtered);
       } catch (err) {
         console.error("Error fetching user suggestions:", err);
       }
     };
+
     const delay = setTimeout(fetchSuggestions, 300);
     return () => clearTimeout(delay);
-  }, [searchTerm]);
+  }, [searchTerm, projectId, selectedUsers]);
 
-  const handleSelectUser = (user) => {
-    if (!selectedUsers.some((u) => u._id === user._id)) {
-      setSelectedUsers([...selectedUsers, user]);
+  const handleSelectUser = (u) => {
+    if (!selectedUsers.some((s) => s._id === u._id || s.id === u.id)) {
+      setSelectedUsers((prev) => [...prev, u]);
     }
     setSearchTerm("");
     setSuggestions([]);
   };
 
   const handleRemoveUser = (id) => {
-    setSelectedUsers(selectedUsers.filter((u) => u._id !== id));
+    setSelectedUsers((prev) => prev.filter((u) => u._id !== id && u.id !== id));
   };
 
   const handleSendInvites = async () => {
-  const token = localStorage.getItem("token");
-  if (!token) return alert("You are not logged in");
-
-  try {
-    // Map through selected users and send invites
-    const results = await Promise.all(
-      selectedUsers.map(async (user) => {
-        try {
-          const response = await api.post(
-            "/invites",
-            { projectId, recipientEmail: user.email },
-            {
-              headers: { Authorization: `Bearer ${token}` }, // use cached token
-            }
-          );
-          return { user: user.email, success: true, data: response.data };
-        } catch (err) {
-          console.error(`Error sending invite to ${user.email}:`, err.response?.data || err);
-          return { user: user.email, success: false, error: err.response?.data?.message || err.message };
-        }
-      })
-    );
-
-    // Separate successes and failures
-    const failedInvites = results.filter((r) => !r.success);
-    if (failedInvites.length) {
-      alert(`Failed to send invites to: ${failedInvites.map((f) => f.user).join(", ")}`);
-    } else {
-      alert("All invites sent successfully!");
+    const token = localStorage.getItem("token");
+    if (!token) {
+      console.log("🟥 Toast Triggered: Not logged in");
+      addToast({
+        type: "error",
+        message: "You are not logged in.",
+        duration: 4000,
+      });
+      return;
     }
 
-    // Clear selected users and close modal
-    setSelectedUsers([]);
-    handleClose();
-  } catch (err) {
-    console.error("Unexpected error sending invites:", err);
-    alert("Something went wrong. Please try again.");
-  }
-};
+    if (selectedUsers.length === 0) {
+      console.log("🟨 Toast Triggered: No users selected");
+      addToast({
+        type: "warning",
+        message: "Please select at least one user to invite.",
+        duration: 4000,
+      });
+      return;
+    }
 
+    setLoading(true);
+    try {
+      const results = await Promise.all(
+        selectedUsers.map(async (u) => {
+          try {
+            const res = await api.post(
+              "/invites",
+              { projectId, recipientEmail: u.email },
+              { headers: { Authorization: `Bearer ${token}` } }
+            );
+            return { success: true, email: u.email, data: res.data };
+          } catch (err) {
+            return {
+              success: false,
+              email: u.email,
+              error: err.response?.data?.message || err.message,
+            };
+          }
+        })
+      );
+
+      const failed = results.filter((r) => !r.success);
+      const successful = results.filter((r) => r.success);
+
+      if (successful.length > 0) {
+        console.log(`🟩 Toast Triggered: ${successful.length} invite(s) sent`);
+        addToast({
+          type: "success",
+          message: `${successful.length} invite(s) sent successfully!`,
+          duration: 3000,
+        });
+      }
+
+      if (failed.length > 0) {
+        failed.forEach((f) => {
+          console.log(`🟥 Toast Triggered: Failed to invite ${f.email}`);
+          addToast({
+            type: "error",
+            message: `Failed to invite ${f.email}: ${f.error}`,
+            duration: 5000,
+          });
+        });
+      }
+
+      setSelectedUsers([]);
+      setSearchTerm("");
+      setSuggestions([]);
+      handleClose();
+    } catch (err) {
+      console.error("Error sending invites:", err);
+      console.log("🟥 Toast Triggered: Invite process error");
+      addToast({
+        type: "error",
+        message: "Something went wrong while sending invites.",
+        duration: 4000,
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <Modal show={show} onHide={handleClose} centered size="md">
       <Modal.Header closeButton>
         <Modal.Title>Invite Members</Modal.Title>
       </Modal.Header>
+
       <Modal.Body>
         <Form.Group className="mb-3">
           <Form.Label>Search Users</Form.Label>
@@ -94,9 +157,14 @@ function InviteMembersModal({ show, handleClose, projectId }) {
 
         {suggestions.length > 0 && (
           <ListGroup className="mb-3">
-            {suggestions.map((user) => (
-              <ListGroup.Item key={user._id} action onClick={() => handleSelectUser(user)}>
-                {user.fullName} ({user.username}) <small>{user.email}</small>
+            {suggestions.map((u) => (
+              <ListGroup.Item
+                key={u._id || u.id}
+                action
+                onClick={() => handleSelectUser(u)}
+              >
+                {u.fullName || u.username}{" "}
+                <small className="text-muted">({u.email})</small>
               </ListGroup.Item>
             ))}
           </ListGroup>
@@ -106,11 +174,11 @@ function InviteMembersModal({ show, handleClose, projectId }) {
           <div className="mb-3">
             {selectedUsers.map((u) => (
               <Badge
-                key={u._id}
+                key={u._id || u.id}
                 bg="info"
                 className="me-2 p-2"
                 style={{ cursor: "pointer" }}
-                onClick={() => handleRemoveUser(u._id)}
+                onClick={() => handleRemoveUser(u._id || u.id)}
               >
                 {u.fullName || u.username} ×
               </Badge>
@@ -118,9 +186,18 @@ function InviteMembersModal({ show, handleClose, projectId }) {
           </div>
         )}
       </Modal.Body>
+
       <Modal.Footer>
-        <Button variant="secondary" onClick={handleClose}>Cancel</Button>
-        <Button variant="success" onClick={handleSendInvites}>Send Invites</Button>
+        <Button variant="secondary" onClick={handleClose}>
+          Cancel
+        </Button>
+        <Button
+          variant="success"
+          onClick={handleSendInvites}
+          disabled={loading || selectedUsers.length === 0}
+        >
+          {loading ? <Spinner size="sm" animation="border" /> : "Send Invites"}
+        </Button>
       </Modal.Footer>
     </Modal>
   );

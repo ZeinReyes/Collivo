@@ -1,19 +1,7 @@
-import { useState } from "react";
-
-let idCounter = 0;
+import { useContext } from "react";
+import { useGlobalToast } from "../contexts/toastContext";
 
 export const useToast = () => {
-  const [toasts, setToasts] = useState([]);
-
-  const addToast = (toast) => {
-    const id = ++idCounter;
-    setToasts((prev) => [...prev, { ...toast, id }]);
-    setTimeout(() => removeToast(id), toast.duration || 4000);
-  };
-
-  const removeToast = (id) => {
-    setToasts((prev) => prev.filter((t) => t.id !== id));
-  };
-
-  return { toasts, addToast, removeToast };
+  const { addToast } = useGlobalToast();
+  return { addToast };
 };
