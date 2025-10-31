@@ -13,20 +13,32 @@ export const inviteMember = async (req, res) => {
     if (!projectId || !recipientEmail)
       return res.status(400).json({ message: "Project ID and email required." });
 
-    const project = await Project.findById(projectId);
+    const project = await Project.findById(projectId).populate("members.user", "_id");
     if (!project) return res.status(404).json({ message: "Project not found" });
 
-    if (project.createdBy.toString() !== senderId.toString())
-      return res.status(403).json({ message: "Only project owner can invite." });
+    // Check if sender is owner or admin
+    const senderIsAdmin = project.members.some(
+      (m) => m.user._id.toString() === senderId.toString() && m.role === "Admin"
+    );
+
+    if (project.createdBy.toString() !== senderId.toString() && !senderIsAdmin) {
+      return res.status(403).json({ message: "Only project owner or admins can invite." });
+    }
 
     const recipient = await User.findOne({ email: recipientEmail });
     if (!recipient) return res.status(404).json({ message: "User not found" });
+
+    // Check if recipient is already a member
+    const alreadyMember = project.members.some(
+      (m) => m.user._id.toString() === recipient._id.toString()
+    );
+    if (alreadyMember) return res.status(400).json({ message: "User is already a project member." });
 
     const invite = await Invite.create({
       project: projectId,
       sender: senderId,
       recipient: recipient._id,
-      role: role || "Member",
+      role: role || "Viewer", // default role if not provided
       status: "Pending",
     });
 
@@ -40,10 +52,10 @@ export const inviteMember = async (req, res) => {
     await transporter.sendMail({
       from: `"Project Invite" <${process.env.EMAIL_USER}>`,
       to: recipientEmail,
-      subject: `You're invited to join "${project.name}" as ${role}`,
+      subject: `You're invited to join "${project.name}" as ${role || "Viewer"}`,
       html: `
         <h3>You've been invited to join <strong>${project.name}</strong></h3>
-        <p>You are invited as a <strong>${role}</strong>.</p>
+        <p>You are invited as a <strong>${role || "Viewer"}</strong>.</p>
         <a href="${inviteLink}" style="padding: 10px 15px; background: #28a745; color: white; text-decoration: none;">
           View Invitation
         </a>
@@ -106,7 +118,7 @@ export const respondToInvite = async (req, res) => {
       if (!alreadyMember) {
         project.members.push({
           user: userId,
-          role: invite.role || "Member",
+          role: invite.role, 
           addedAt: new Date(),
         });
 
@@ -115,7 +127,6 @@ export const respondToInvite = async (req, res) => {
 
       return res.status(200).json({ message: "Invite accepted", project });
     }
-
 
     return res.status(200).json({ message: "Invite declined" });
   } catch (error) {

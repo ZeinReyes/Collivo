@@ -15,11 +15,20 @@ function InviteResponse() {
     try {
       setLoading(true);
       const res = await api.get(`/invites/${inviteId}`);
+      
+      // 🔍 ADD THESE DEBUG LOGS
+      console.log("Invite response:", res.data);
+      console.log("Role from response:", res.data.role);
+      
       if (res.status === 200) {
         setRole(res.data.role);
         setStatus(res.data.status);
+        
+        // 🔍 ADD THIS DEBUG LOG
+        console.log("Set role state to:", res.data.role);
       }
     } catch (err) {
+      console.error("Error fetching invite:", err);
       setError("Failed to load invite details.");
     } finally {
       setLoading(false);

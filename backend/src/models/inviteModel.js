@@ -16,6 +16,7 @@ const inviteSchema = new mongoose.Schema({
     ref: "User",
     required: true,
   },
+  role: { type: String, enum: ["Member", "Admin", "Viewer"], default: "Viewer" },
   status: {
     type: String,
     enum: ["Pending", "Accepted", "Declined"],

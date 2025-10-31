@@ -323,9 +323,6 @@ function ProjectsPage() {
                       <tr key={project._id}>
                         <td>
                           <div className="fw-semibold">{project.name}</div>
-                          <div className="text-muted small">
-                            {project.description || ""}
-                          </div>
                         </td>
                         <td>
                           <span
