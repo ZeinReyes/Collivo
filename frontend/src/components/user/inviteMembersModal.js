@@ -3,6 +3,7 @@ import { Modal, Button, Form, ListGroup, Badge, Spinner } from "react-bootstrap"
 import api from "../../api/api";
 import { AuthContext } from "../../contexts/authContext";
 import { useToast } from "../../hooks/useToast";
+import { FiX } from "react-icons/fi";
 
 function InviteMembersModal({ show, handleClose, projectId }) {
   const [searchTerm, setSearchTerm] = useState("");
@@ -11,7 +12,7 @@ function InviteMembersModal({ show, handleClose, projectId }) {
   const [loading, setLoading] = useState(false);
 
   const { user } = useContext(AuthContext);
-  const { addToast } = useToast(); 
+  const { addToast } = useToast();
 
   useEffect(() => {
     const fetchSuggestions = async () => {
@@ -21,16 +22,18 @@ function InviteMembersModal({ show, handleClose, projectId }) {
       }
 
       try {
+        const token = localStorage.getItem("token");
+
         const res = await api.get(
-          `/users/search?query=${encodeURIComponent(searchTerm)}&projectId=${projectId}`
+          `/users/search?query=${encodeURIComponent(searchTerm)}&projectId=${projectId}`,
+          { headers: { Authorization: `Bearer ${token}` } }
         );
+
         let data = res.data || [];
 
         const filtered = data.filter(
           (u) =>
-            !selectedUsers.some(
-              (s) => s._id === u._id || s.id === u.id || s.email === u.email
-            )
+            !selectedUsers.some((s) => s._id === u._id || s.email === u.email)
         );
 
         setSuggestions(filtered);
@@ -44,95 +47,61 @@ function InviteMembersModal({ show, handleClose, projectId }) {
   }, [searchTerm, projectId, selectedUsers]);
 
   const handleSelectUser = (u) => {
-    if (!selectedUsers.some((s) => s._id === u._id || s.id === u.id)) {
-      setSelectedUsers((prev) => [...prev, u]);
-    }
+    setSelectedUsers((prev) => [...prev, { ...u, role: "Member" }]);
     setSearchTerm("");
     setSuggestions([]);
   };
 
   const handleRemoveUser = (id) => {
-    setSelectedUsers((prev) => prev.filter((u) => u._id !== id && u.id !== id));
+    setSelectedUsers((prev) => prev.filter((u) => u._id !== id));
+  };
+
+  const handleRoleChange = (index, newRole) => {
+    setSelectedUsers((prev) =>
+      prev.map((u, i) => (i === index ? { ...u, role: newRole } : u))
+    );
   };
 
   const handleSendInvites = async () => {
     const token = localStorage.getItem("token");
     if (!token) {
-      console.log("🟥 Toast Triggered: Not logged in");
-      addToast({
-        type: "error",
-        message: "You are not logged in.",
-        duration: 4000,
-      });
+      addToast({ type: "error", message: "You are not logged in." });
       return;
     }
 
     if (selectedUsers.length === 0) {
-      console.log("🟨 Toast Triggered: No users selected");
-      addToast({
-        type: "warning",
-        message: "Please select at least one user to invite.",
-        duration: 4000,
-      });
+      addToast({ type: "warning", message: "Select at least one user." });
       return;
     }
 
     setLoading(true);
     try {
-      const results = await Promise.all(
+      await Promise.all(
         selectedUsers.map(async (u) => {
           try {
-            const res = await api.post(
+            await api.post(
               "/invites",
-              { projectId, recipientEmail: u.email },
+              { projectId, recipientEmail: u.email, role: u.role },
               { headers: { Authorization: `Bearer ${token}` } }
             );
-            return { success: true, email: u.email, data: res.data };
-          } catch (err) {
-            return {
-              success: false,
-              email: u.email,
-              error: err.response?.data?.message || err.message,
-            };
+            return { success: true };
+          } catch {
+            return { success: false, email: u.email };
           }
         })
       );
 
-      const failed = results.filter((r) => !r.success);
-      const successful = results.filter((r) => r.success);
-
-      if (successful.length > 0) {
-        console.log(`🟩 Toast Triggered: ${successful.length} invite(s) sent`);
-        addToast({
-          type: "success",
-          message: `${successful.length} invite(s) sent successfully!`,
-          duration: 3000,
-        });
-      }
-
-      if (failed.length > 0) {
-        failed.forEach((f) => {
-          console.log(`🟥 Toast Triggered: Failed to invite ${f.email}`);
-          addToast({
-            type: "error",
-            message: `Failed to invite ${f.email}: ${f.error}`,
-            duration: 5000,
-          });
-        });
-      }
-
       setSelectedUsers([]);
       setSearchTerm("");
-      setSuggestions([]);
       handleClose();
-    } catch (err) {
-      console.error("Error sending invites:", err);
-      console.log("🟥 Toast Triggered: Invite process error");
+
       addToast({
-        type: "error",
-        message: "Something went wrong while sending invites.",
-        duration: 4000,
+        type: "success",
+        message: "Invitations sent successfully!",
+        duration: 3000,
       });
+    } catch {
+      addToast({ type: "error", message: "Failed to send invites." });
     } finally {
       setLoading(false);
     }
@@ -158,11 +127,7 @@ function InviteMembersModal({ show, handleClose, projectId }) {
         {suggestions.length > 0 && (
           <ListGroup className="mb-3">
             {suggestions.map((u) => (
-              <ListGroup.Item
-                key={u._id || u.id}
-                action
-                onClick={() => handleSelectUser(u)}
-              >
+              <ListGroup.Item key={u._id} action onClick={() => handleSelectUser(u)}>
                 {u.fullName || u.username}{" "}
                 <small className="text-muted">({u.email})</small>
               </ListGroup.Item>
@@ -171,17 +136,50 @@ function InviteMembersModal({ show, handleClose, projectId }) {
         )}
 
         {selectedUsers.length > 0 && (
-          <div className="mb-3">
-            {selectedUsers.map((u) => (
-              <Badge
-                key={u._id || u.id}
-                bg="info"
-                className="me-2 p-2"
-                style={{ cursor: "pointer" }}
-                onClick={() => handleRemoveUser(u._id || u.id)}
+          <div
+            className="mb-3 p-2"
+            style={{
+              maxHeight: "150px",
+              overflowY: "auto",
+              border: "1px solid #e5e7eb",
+              borderRadius: "8px",
+              background: "#fafafa",
+            }}
+          >
+            {selectedUsers.map((u, index) => (
+              <div
+                key={u._id}
+                className="d-flex align-items-center justify-content-between mb-2"
+                style={{
+                  background: "white",
+                  borderRadius: "6px",
+                  padding: "6px 10px",
+                  border: "1px solid #e0e0e0",
+                }}
               >
-                {u.fullName || u.username} ×
-              </Badge>
+                <div className="d-flex align-items-center">
+                  <Badge bg="info" className="p-2 me-2">
+                    {u.fullName || u.username}
+                  </Badge>
+
+                  <Form.Select
+                    value={u.role}
+                    onChange={(e) => handleRoleChange(index, e.target.value)}
+                    style={{ width: "120px", fontSize: "0.85rem" }}
+                  >
+                    <option value="Admin">Admin</option>
+                    <option value="Member">Member</option>
+                    <option value="Viewer">Viewer</option>
+                  </Form.Select>
+                </div>
+
+                <FiX
+                  size={18}
+                  color="#dc3545"
+                  style={{ cursor: "pointer" }}
+                  onClick={() => handleRemoveUser(u._id)}
+                />
+              </div>
             ))}
           </div>
         )}
@@ -191,11 +189,7 @@ function InviteMembersModal({ show, handleClose, projectId }) {
         <Button variant="secondary" onClick={handleClose}>
           Cancel
         </Button>
-        <Button
-          variant="success"
-          onClick={handleSendInvites}
-          disabled={loading || selectedUsers.length === 0}
-        >
+        <Button variant="success" onClick={handleSendInvites} disabled={loading}>
           {loading ? <Spinner size="sm" animation="border" /> : "Send Invites"}
         </Button>
       </Modal.Footer>

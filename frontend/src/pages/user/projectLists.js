@@ -1,4 +1,3 @@
-// src/pages/user/ProjectsPage.js
 import React, { useEffect, useState, useMemo } from "react";
 import {
   Container,
@@ -47,9 +46,6 @@ function ProjectsPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [gotoPage, setGotoPage] = useState("");
 
-  // Placeholder date range state (UI only; hook up to backend if needed)
-  const [dateRangeLabel] = useState("Feb 24th, 2023 - Mar 15, 2023");
-
   useEffect(() => {
     fetchProjects();
   }, []);
@@ -57,7 +53,6 @@ function ProjectsPage() {
   const fetchProjects = async () => {
     try {
       const res = await api.get("/projects/user");
-      // expecting res.data to be array
       setProjects(res.data || []);
     } catch (err) {
       console.error("Error fetching projects:", err);
@@ -101,6 +96,7 @@ function ProjectsPage() {
       console.error("Error deleting project:", err);
     }
   };
+  
 
   const formatDate = (date) =>
     date
@@ -111,7 +107,7 @@ function ProjectsPage() {
         })
       : "-";
 
-  // ownership: attempt to infer current user id from localStorage or project context
+  // Get current user ID
   let currentUserId = null;
   try {
     const storedUser = JSON.parse(localStorage.getItem("user"));
@@ -120,23 +116,30 @@ function ProjectsPage() {
     currentUserId = null;
   }
 
-  // Filtered projects (search + priority)
+  // Filters
   const filteredProjects = useMemo(() => {
     return projects.filter((p) => {
-      const nameMatches = p.name?.toLowerCase().includes(searchTerm.toLowerCase());
-      const ownerNameMatches =
-        p.createdBy?.fullName?.toLowerCase().includes(searchTerm.toLowerCase());
-      const searchMatch = searchTerm.trim() === "" || nameMatches || ownerNameMatches;
-
+      const nameMatch = p.name?.toLowerCase().includes(searchTerm.toLowerCase());
+      const ownerMatch = p.createdBy?.fullName
+        ?.toLowerCase()
+        .includes(searchTerm.toLowerCase());
       const priorityMatch = priorityFilter === "All" || p.priority === priorityFilter;
-
-      return searchMatch && priorityMatch;
+      return (nameMatch || ownerMatch) && priorityMatch;
     });
   }, [projects, searchTerm, priorityFilter]);
 
-  // Pagination calculations
+  // Pagination
   const totalPages = Math.max(1, Math.ceil(filteredProjects.length / rowsPerPage));
   const clampPage = (p) => Math.min(Math.max(1, p), totalPages);
+  useEffect(() => {
+    setCurrentPage((prev) => clampPage(prev));
+  }, [filteredProjects.length, rowsPerPage]);
+
+  const colorMap = {
+    Low: "#198754",
+    Medium: "#ffc107",
+    High: "#dc3545",
+  };
 
   // ensure currentPage valid when filtered changes
   useEffect(() => {
@@ -193,22 +196,15 @@ function ProjectsPage() {
     });
   };
 
-  const colorMap = {
-    Low: "#198754",
-    Medium: "#ffc107",
-    High: "#dc3545",
-  };
 
   return (
     <Container fluid className="py-4 px-5">
-      {/* Top controls */}
+      {/* Header */}
       <Row className="align-items-center mb-3">
         <Col md="6">
           <h3 className="mb-0">My Projects</h3>
         </Col>
-
         <Col md="6" className="text-end">
-
           <Button
             variant="primary"
             onClick={() => {
@@ -222,7 +218,7 @@ function ProjectsPage() {
         </Col>
       </Row>
 
-      {/* Filters Bar (search, priority, show rows) */}
+      {/* Filters */}
       <Row className="align-items-center mb-2 g-2">
         <Col md={5}>
           <InputGroup>
@@ -232,10 +228,7 @@ function ProjectsPage() {
             <Form.Control
               placeholder="Search by name or owner..."
               value={searchTerm}
-              onChange={(e) => {
-                setSearchTerm(e.target.value);
-                setCurrentPage(1);
-              }}
+              onChange={(e) => setSearchTerm(e.target.value)}
             />
             <Button
               variant="outline-secondary"
@@ -243,7 +236,6 @@ function ProjectsPage() {
               onClick={() => {
                 setSearchTerm("");
                 setPriorityFilter("All");
-                setRowsPerPage(10);
               }}
               title="Reset filters"
             >
@@ -251,14 +243,10 @@ function ProjectsPage() {
             </Button>
           </InputGroup>
         </Col>
-
         <Col md={3}>
           <Form.Select
             value={priorityFilter}
-            onChange={(e) => {
-              setPriorityFilter(e.target.value);
-              setCurrentPage(1);
-            }}
+            onChange={(e) => setPriorityFilter(e.target.value)}
           >
             <option value="All">All Priorities</option>
             <option value="High">High</option>
@@ -266,23 +254,16 @@ function ProjectsPage() {
             <option value="Low">Low</option>
           </Form.Select>
         </Col>
-
-        <Col md={2} className="text-end">
+        <Col md={2}>
           <Form.Select
             value={rowsPerPage}
-            onChange={(e) => {
-              const n = Number(e.target.value);
-              setRowsPerPage(n);
-              setCurrentPage(1);
-            }}
+            onChange={(e) => setRowsPerPage(Number(e.target.value))}
           >
-            <option value={5}>Show 5 rows</option>
-            <option value={10}>Show 10 rows</option>
-            <option value={20}>Show 20 rows</option>
-            <option value={50}>Show 50 rows</option>
+            <option value={5}>Show 5</option>
+            <option value={10}>Show 10</option>
+            <option value={20}>Show 20</option>
           </Form.Select>
         </Col>
-
         <Col md={2} className="text-end">
           <small className="text-muted">Total: {filteredProjects.length}</small>
         </Col>
@@ -297,40 +278,55 @@ function ProjectsPage() {
         <Alert variant="danger">{error}</Alert>
       ) : (
         <>
-          <div className="table-card p-3 mb-2">
+          <div className="table-card p-3 mb-3">
             <Table hover responsive className="mb-0 align-middle dashboard-table">
               <thead>
                 <tr>
-                  <th style={{ width: "25%" }}>Name</th>
-                  <th style={{ width: "12%" }}>Priority</th>
-                  <th style={{ width: "20%" }}>Owner</th>
-                  <th style={{ width: "13%" }}>Start Date</th>
-                  <th style={{ width: "13%" }}>Due Date</th>
-                  <th style={{ width: "15%" }} className="text-end">
-                    Actions
-                  </th>
+                  <th>Name</th>
+                  <th>Priority</th>
+                  <th>Owner</th>
+                  <th>Start Date</th>
+                  <th>Due Date</th>
+                  <th className="text-end">Actions</th>
                 </tr>
               </thead>
-
               <tbody>
                 {currentProjects.length === 0 ? (
                   <tr>
                     <td colSpan={6} className="text-center py-4 text-muted">
-                      No matching projects
+                      No projects found
                     </td>
                   </tr>
                 ) : (
                   currentProjects.map((project) => {
                     const color = colorMap[project.priority] || "#6c757d";
-                    const isOwner = project.createdBy?._id === currentUserId;
+
+                    const currentMember = project.members?.find(
+                      (m) =>
+                        m.user?._id === currentUserId ||
+                        m.user?.id === currentUserId
+                    );
+
+                    let currentRole = currentMember?.role || "Viewer";
+                    if (
+                      project.createdBy?._id === currentUserId ||
+                      project.createdBy?.id === currentUserId
+                    ) {
+                      currentRole = "Owner";
+                    }
+
+                    const canEdit = ["Owner", "Admin"].includes(currentRole);
+                    const canDelete = ["Owner"].includes(currentRole);
+                    const canInvite = ["Owner", "Admin"].includes(currentRole);
 
                     return (
-                      <tr key={project._id} className="table-row">
-                        <td className="py-3">
+                      <tr key={project._id}>
+                        <td>
                           <div className="fw-semibold">{project.name}</div>
-                          <div className="text-muted small">{project.description || ""}</div>
+                          <div className="text-muted small">
+                            {project.description || ""}
+                          </div>
                         </td>
-
                         <td>
                           <span
                             style={{
@@ -344,12 +340,12 @@ function ProjectsPage() {
                             {project.priority || "—"}
                           </span>
                         </td>
-
                         <td>
-                          <div>{project.createdBy?.fullName || "Unknown"}</div>
-                          <div className="text-muted small">{project.createdBy?.email || ""}</div>
+                          <div>{project.createdBy?.email || "Unknown"}</div>
+                          <div className="text-muted small">
+                            {project.createdBy?.fullName || ""}
+                          </div>
                         </td>
-
                         <td>{formatDate(project.startDate)}</td>
                         <td>{formatDate(project.dueDate)}</td>
 
@@ -357,7 +353,9 @@ function ProjectsPage() {
                           <Button
                             variant="link"
                             size="sm"
-                            onClick={() => navigate(`/project-management/projects/${project._id}`)}
+                            onClick={() =>
+                              navigate(`/project-management/projects/${project._id}`)
+                            }
                             className="p-1 me-1 text-primary"
                             title="View"
                           >
@@ -368,11 +366,18 @@ function ProjectsPage() {
                             variant="link"
                             size="sm"
                             onClick={() => {
-                              setEditingProject(project);
-                              setShowModal(true);
+                              if (canEdit) {
+                                setEditingProject(project);
+                                setShowModal(true);
+                              }
                             }}
-                            className="p-1 me-1 text-success"
-                            title="Edit"
+                            className={`p-1 me-1 text-success ${
+                              !canEdit ? "opacity-50" : ""
+                            }`}
+                            disabled={!canEdit}
+                            title={
+                              canEdit ? "Edit Project" : "Only Owner/Admin can edit"
+                            }
                           >
                             <FaEdit />
                           </Button>
@@ -380,27 +385,41 @@ function ProjectsPage() {
                           <Button
                             variant="link"
                             size="sm"
-                            onClick={() => handleDeleteClick(project)}
-                            className="p-1 me-1 text-danger"
-                            title="Delete"
+                            onClick={() => canDelete && handleDeleteClick(project)}
+                            className={`p-1 me-1 text-danger ${
+                              !canDelete ? "opacity-50" : ""
+                            }`}
+                            disabled={!canDelete}
+                            title={
+                              canDelete
+                                ? "Delete Project"
+                                : "Only Owner can delete"
+                            }
                           >
                             <FaTrash />
                           </Button>
 
-                          {isOwner && (
-                            <Button
-                              variant="link"
-                              size="sm"
-                              onClick={() => {
+                          <Button
+                            variant="link"
+                            size="sm"
+                            onClick={() => {
+                              if (canInvite) {
                                 setProjectToInvite(project);
                                 setShowInviteModal(true);
-                              }}
-                              className="p-1 text-warning"
-                              title="Invite"
-                            >
-                              <FaUserPlus />
-                            </Button>
-                          )}
+                              }
+                            }}
+                            className={`p-1 text-warning ${
+                              !canInvite ? "opacity-50" : ""
+                            }`}
+                            disabled={!canInvite}
+                            title={
+                              canInvite
+                                ? "Invite Members"
+                                : "Only Owner/Admin can invite"
+                            }
+                          >
+                            <FaUserPlus />
+                          </Button>
                         </td>
                       </tr>
                     );
@@ -409,8 +428,7 @@ function ProjectsPage() {
               </tbody>
             </Table>
           </div>
-
-          {/* Pagination controls (centered) */}
+           {/* Pagination controls (centered) */}
           <Row className="align-items-center mt-3">
             <Col md={4} className="text-start">
               <small className="text-muted">
@@ -473,6 +491,7 @@ function ProjectsPage() {
               </Button>
             </Col>
           </Row>
+
         </>
       )}
 
@@ -487,7 +506,7 @@ function ProjectsPage() {
       {showDeleteModal && (
         <DeleteModal
           title="Delete Project"
-          message={`Are you sure you want to delete "${projectToDelete?.name}"? This action cannot be undone.`}
+          message={`Are you sure you want to delete "${projectToDelete?.name}"?`}
           onCancel={() => setShowDeleteModal(false)}
           onConfirm={handleDeleteConfirm}
         />
@@ -501,7 +520,6 @@ function ProjectsPage() {
         />
       )}
 
-      {/* Inline CSS to emulate the clean dashboard style */}
       <style>{`
         .table-card {
           background: #fff;
@@ -510,28 +528,13 @@ function ProjectsPage() {
         }
         .dashboard-table thead th {
           background: #fafafa;
-          color: #6b6b6b;
           font-weight: 600;
-          border-bottom: 1px solid #f1f1f3;
-          padding: 12px;
+          color: #6b6b6b;
         }
-        .dashboard-table tbody tr {
-          border-bottom: 1px solid #f4f4f6;
+        .opacity-50 {
+          opacity: 0.5;
+          pointer-events: none;
         }
-        .dashboard-table tbody tr.table-row:hover {
-          background: #fbfbfc;
-        }
-        .dashboard-table td {
-          vertical-align: middle;
-          padding: 12px;
-          background: transparent;
-        }
-        .disabled-pagination {
-          background: transparent;
-          color: #9aa0a6;
-        }
-        /* subtle small text style */
-        .table-card .small { font-size: 0.78rem; }
       `}</style>
     </Container>
   );

@@ -18,8 +18,25 @@ const ProjectSchema = new mongoose.Schema(
     },
     members: [
       {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "User",
+        user: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "User",
+          required: true,
+        },
+        role: {
+          type: String,
+          enum: [
+            "Owner",  
+            "Admin",   
+            "Member",     
+            "Viewer"     
+          ],
+          default: "Member",
+        },
+        addedAt: {
+          type: Date,
+          default: Date.now,
+        },
       },
     ],
     startDate: {
@@ -28,7 +45,7 @@ const ProjectSchema = new mongoose.Schema(
     },
     dueDate: {
       type: Date,
-      required: true, // ⏰ Make this required for proper planning
+      required: true,
     },
     status: {
       type: String,

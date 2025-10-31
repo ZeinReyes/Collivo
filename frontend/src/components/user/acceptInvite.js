@@ -1,21 +1,40 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import api from "../../api/api";
 
 function InviteResponse() {
   const { inviteId } = useParams();
   const navigate = useNavigate();
-  const [status, setStatus] = useState("Pending"); // Pending, Accepted, Declined
+  const [status, setStatus] = useState("Pending");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [role, setRole] = useState("");
+
+  useEffect(() => {
+  const fetchInviteDetails = async () => {
+    try {
+      setLoading(true);
+      const res = await api.get(`/invites/${inviteId}`);
+      if (res.status === 200) {
+        setRole(res.data.role);
+        setStatus(res.data.status);
+      }
+    } catch (err) {
+      setError("Failed to load invite details.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  fetchInviteDetails();
+}, [inviteId]);
 
   const handleResponse = async (action) => {
     try {
       setLoading(true);
       setError("");
 
-      // Use your api instance
-      const res = await api.post(`/invites/${inviteId}`, { action });
+      const res = await api.post(`/invites/${inviteId}/respond`, { action });
 
       if (res.status === 200) {
         setStatus(action === "accept" ? "Accepted" : "Declined");
@@ -52,6 +71,13 @@ function InviteResponse() {
             ? "❌ Invite Declined"
             : "📩 Project Invite"}
         </h1>
+
+        {role && (
+          <p style={{ fontWeight: "600", marginBottom: "10px" }}>
+            Assigned Role: <span style={{ color: "#007bff" }}>{role}</span>
+          </p>
+        )}
+
         <p style={styles.text}>
           {status === "Accepted"
             ? "You have successfully joined the project."

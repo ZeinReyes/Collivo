@@ -3,7 +3,6 @@ import axios from "axios";
 import Navbar from "../../components/landing page/userNavbar";
 import Footer from "../../components/landing page/userFooter";
 import "./contactPage.css";
-import { ToastManager } from "../../components/common/notificationToast";
 import { useToast } from "../../hooks/useToast";
 
 const ContactUs = () => {
@@ -14,7 +13,7 @@ const ContactUs = () => {
   });
   const [loading, setLoading] = useState(false);
 
-  const { toasts, addToast, removeToast } = useToast();
+  const { addToast } = useToast(); // ✅ Only use addToast; no need for toasts/removeToast here
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -35,7 +34,6 @@ const ContactUs = () => {
 
     try {
       setLoading(true);
-
       const res = await axios.post("http://localhost:5000/api/contact", formData);
 
       if (res.data.success) {
@@ -48,7 +46,7 @@ const ContactUs = () => {
       } else {
         addToast({
           type: "error",
-          title: "Failed to Send Message.",
+          title: "Failed to Send Message",
           message: "Something went wrong. Please try again.",
         });
       }
@@ -71,6 +69,7 @@ const ContactUs = () => {
 
         <section className="contact-section">
           <div className="contact-container">
+            {/* LEFT SIDE: INFO */}
             <div className="contact-info">
               <h6>Contact Us</h6>
               <h2>Get In Touch With Us</h2>
@@ -105,6 +104,7 @@ const ContactUs = () => {
               </div>
             </div>
 
+            {/* RIGHT SIDE: FORM */}
             <div className="contact-form">
               <form onSubmit={handleSubmit}>
                 <input
@@ -137,8 +137,6 @@ const ContactUs = () => {
       </div>
 
       <Footer />
-
-      <ToastManager toasts={toasts} removeToast={removeToast} />
     </>
   );
 };

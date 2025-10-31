@@ -62,7 +62,7 @@ function ForgotPasswordPage() {
 
         <div className="sign-in_footer mt-3">
           <p className="text-center fs-6">
-            <a href="/" className="note">
+            <a href="/login" className="note">
               Back to Login
             </a>
           </p>

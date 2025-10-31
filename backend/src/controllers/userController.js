@@ -133,18 +133,16 @@ export const searchUsers = async (req, res) => {
 
     let excludedUserIds = [];
 
-    // 🧩 Exclude members & creator of the project if projectId is provided
     if (projectId) {
       const project = await Project.findById(projectId).select("members createdBy");
       if (project) {
         excludedUserIds = [
           project.createdBy.toString(),
-          ...project.members.map((id) => id.toString()),
+          ...project.members.map((m) => m.user.toString()), // ✅ FIXED HERE
         ];
       }
     }
 
-    // 🔍 Search users not in excludedUserIds
     const users = await User.find({
       _id: { $nin: excludedUserIds },
       $or: [

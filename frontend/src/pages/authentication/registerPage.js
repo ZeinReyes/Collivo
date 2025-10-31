@@ -110,7 +110,7 @@ function RegisterPage() {
         <div className="sign-in_footer">
           <p className="text-center fs-6">
             Already have an account?{' '}
-            <a href="/" className="note">
+            <a href="/login" className="note">
               Login
             </a>
           </p>

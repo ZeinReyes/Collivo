@@ -1,20 +1,23 @@
 import express from "express";
-import { protect } from "../middlewares/authMiddleware.js";
 import {
   inviteMember,
   getUserInvites,
   respondToInvite,
+  getInviteDetails
 } from "../controllers/inviteController.js";
+import auth from "../middlewares/authMiddleware.js";
 
 const router = express.Router();
 
-// Send invite
-router.post("/", protect, inviteMember);
+// ✅ Public route (no login required) - used for opening the invite page
+router.get("/:inviteId", getInviteDetails);
 
-// Get user's invites
-router.get("/", protect, getUserInvites);
+// ✅ Protected routes
+router.get("/", auth, getUserInvites);
+router.post("/", auth, inviteMember);
 
-// Accept or decline invite
-router.post("/:inviteId", protect, respondToInvite);
+// ❗ CHANGE THIS ROUTE
+// Before: router.post("/:inviteId", auth, respondToInvite);
+router.post("/:inviteId/respond", auth, respondToInvite);
 
 export default router;
