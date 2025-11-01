@@ -27,6 +27,14 @@ const ProjectPage = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
 
+  // === Helper: Role-based avatar colors ===
+  const getAvatarColor = (role) => {
+    const r = (role || "").toLowerCase();
+    if (r === "owner") return "#007bff"; // blue
+    if (r === "admin") return "#28a745"; // green
+    return "#6c757d"; // gray default
+  };
+
   // === FETCH PROJECT DATA ===
   const fetchProject = async () => {
     try {
@@ -97,12 +105,8 @@ const ProjectPage = () => {
   const userId = currentUser?._id || currentUser?.id;
   const ownerId = project.createdBy?._id || project.createdBy?.id;
 
-  console.log("👤 Current User ID:", userId);
-  console.log("👑 Project Owner ID:", ownerId);
-
   if (ownerId && userId && ownerId.toString() === userId.toString()) {
     currentUserRole = "Owner";
-    console.log("✅ Role identified as: Owner");
   } else {
     const currentMember = project.members?.find((m) => {
       const memberId = m.user?._id || m.user?.id;
@@ -111,9 +115,6 @@ const ProjectPage = () => {
 
     if (currentMember) {
       currentUserRole = currentMember.role || "Member";
-      console.log("✅ Role identified as member:", currentMember.role);
-    } else {
-      console.log("❌ User is not a member of this project");
     }
   }
 
@@ -121,12 +122,6 @@ const ProjectPage = () => {
   const canInvite = ["Owner", "Admin"].includes(currentUserRole);
   const canEdit = ["Owner", "Admin"].includes(currentUserRole);
   const canDelete = currentUserRole === "Owner";
-
-  console.log("🔐 Final Role:", currentUserRole);
-  console.log("🟢 Can Invite:", canInvite);
-  console.log("🟣 Can Edit:", canEdit);
-  console.log("🔴 Can Delete:", canDelete);
-  console.log("📦 Project Members:", project.members);
 
   return (
     <>
@@ -136,7 +131,7 @@ const ProjectPage = () => {
         style={{ backgroundColor: "#f8f9fa" }}
       >
         {/* Breadcrumb */}
-        <div className="mb-3">
+        <div className="mb-3 text-truncate" style={{ maxWidth: "100%" }}>
           <Button
             variant="link"
             className="p-0 text-decoration-none text-primary d-flex align-items-center gap-2"
@@ -148,14 +143,35 @@ const ProjectPage = () => {
         </div>
 
         <div className="main-header bg-white pt-3 px-3 rounded">
-          <div className="mb-2" style={{ fontSize: "13px", color: "#6c757d" }}>
+          {/* ✨ Truncated breadcrumb */}
+          <div
+            className="mb-2 text-truncate"
+            style={{
+              fontSize: "13px",
+              color: "#6c757d",
+              maxWidth: "100%",
+              whiteSpace: "nowrap",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+            }}
+          >
             <a href="/project-management/projects">Project</a> &gt; {project.name}
           </div>
 
           <div className="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-3 gap-3">
-            {/* Project Name + Dropdown */}
-            <div className="d-flex align-items-center gap-2">
-              <h1 className="fw-bold mb-0" style={{ fontSize: "32px" }}>
+            {/* ✨ Project Name with truncation */}
+            <div className="d-flex align-items-center gap-2 flex-wrap">
+              <h1
+                className="fw-bold mb-0 text-truncate"
+                style={{
+                  fontSize: "28px",
+                  maxWidth: "550px",
+                  whiteSpace: "nowrap",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                }}
+                title={project.name}
+              >
                 {project.name}
               </h1>
 
@@ -175,7 +191,6 @@ const ProjectPage = () => {
                 </Dropdown.Toggle>
 
                 <Dropdown.Menu>
-                  {/* Edit Option - Owner & Admin */}
                   <Dropdown.Item
                     onClick={() => setShowEditModal(true)}
                     disabled={!canEdit}
@@ -185,7 +200,6 @@ const ProjectPage = () => {
 
                   <Dropdown.Divider />
 
-                  {/* Delete Option - Only Owner */}
                   <Dropdown.Item
                     onClick={() => setShowDeleteModal(true)}
                     className={canDelete ? "text-danger" : "text-muted"}
@@ -198,71 +212,105 @@ const ProjectPage = () => {
             </div>
 
             {/* Members + Invite */}
-            <div className="d-flex align-items-center gap-2">
-              {project.members?.map((member, idx) => {
-                const displayName =
-                  member.user.fullName || member.user.username || "Unknown";
-                const firstLetter = displayName.charAt(0).toUpperCase();
-                return (
-                  <OverlayTrigger
-                    key={idx}
-                    placement="top"
-                    overlay={<Tooltip>{displayName}</Tooltip>}
-                  >
-                    <div
-                      className="rounded-circle d-flex justify-content-center align-items-center"
-                      style={{
-                        width: "40px",
-                        height: "40px",
-                        backgroundColor: member.avatar
-                          ? "transparent"
-                          : "#1e3a8a",
-                        backgroundImage: member.avatar
-                          ? `url(${member.avatar})`
-                          : "none",
-                        backgroundSize: "cover",
-                        backgroundPosition: "center",
-                        color: "white",
-                        fontWeight: "600",
-                        fontSize: "15px",
-                        textTransform: "uppercase",
-                        border: "2px solid #fff",
-                        boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
-                      }}
-                    >
-                      {!member.avatar && firstLetter}
-                    </div>
-                  </OverlayTrigger>
-                );
-              })}
+<div className="d-flex align-items-center gap-3">
+  {(() => {
+    // Sort members by role priority
+    const sortedMembers = [...(project.members || [])].sort((a, b) => {
+      const rank = { owner: 1, admin: 2, member: 3 };
+      return (rank[a.role?.toLowerCase()] || 99) - (rank[b.role?.toLowerCase()] || 99);
+    });
 
-              {/* Invite Button */}
-              <OverlayTrigger
-                placement="top"
-                overlay={
-                  <Tooltip>
-                    {canInvite
-                      ? "Invite members"
-                      : "Only Owner/Admin can invite members"}
-                  </Tooltip>
-                }
+    const visibleMembers = sortedMembers.slice(0, 3);
+    const extraCount = sortedMembers.length - visibleMembers.length;
+
+    return (
+      <div className="d-flex align-items-center" style={{ position: "relative" }}>
+        {visibleMembers.map((member, index) => {
+          const displayName = member.user.fullName || member.user.username || "Unknown";
+          const firstLetter = displayName.charAt(0).toUpperCase();
+          const avatarColor = getAvatarColor(member.role);
+          const avatarUrl = member.avatar;
+
+          return (
+            <OverlayTrigger
+              key={index}
+              placement="top"
+              overlay={
+                <Tooltip>
+                  {displayName} — {member.role || "Member"}
+                </Tooltip>
+              }
+            >
+              <div
+                className="rounded-circle d-flex justify-content-center align-items-center border border-white"
+                style={{
+                  width: "40px",
+                  height: "40px",
+                  backgroundColor: avatarUrl ? "transparent" : avatarColor,
+                  backgroundImage: avatarUrl ? `url(${avatarUrl})` : "none",
+                  backgroundSize: "cover",
+                  backgroundPosition: "center",
+                  color: "white",
+                  fontWeight: "600",
+                  fontSize: "15px",
+                  textTransform: "uppercase",
+                  marginLeft: index === 0 ? 0 : "-12px",
+                  zIndex: 5 - index,
+                  boxShadow: "0 0 0 1px #fff",
+                }}
               >
-                <span className="d-inline-block">
-                  <Button
-                    variant="success"
-                    onClick={() => canInvite && setShowInviteModal(true)}
-                    style={{ fontSize: "14px", padding: "8px 16px" }}
-                    disabled={!canInvite}
-                  >
-                    Invite Member
-                  </Button>
-                </span>
-              </OverlayTrigger>
-            </div>
+                {!avatarUrl && firstLetter}
+              </div>
+            </OverlayTrigger>
+          );
+        })}
+
+        {extraCount > 0 && (
+          <div
+            className="rounded-circle d-flex justify-content-center align-items-center bg-secondary text-white border border-white"
+            style={{
+              width: "40px",
+              height: "40px",
+              marginLeft: "-12px",
+              fontWeight: "600",
+              fontSize: "15px",
+              zIndex: 1,
+              boxShadow: "0 0 0 1px #fff",
+            }}
+          >
+            +{extraCount}
+          </div>
+        )}
+      </div>
+    );
+  })()}
+
+  <OverlayTrigger
+    placement="top"
+    overlay={
+      <Tooltip>
+        {canInvite
+          ? "Invite members"
+          : "Only Owner/Admin can invite members"}
+      </Tooltip>
+    }
+  >
+    <span className="d-inline-block">
+      <Button
+        variant="success"
+        onClick={() => canInvite && setShowInviteModal(true)}
+        style={{ fontSize: "14px", padding: "8px 16px" }}
+        disabled={!canInvite}
+      >
+        Invite Member
+      </Button>
+    </span>
+  </OverlayTrigger>
+</div>
+
           </div>
 
           <style>{`
-
             .custom-tab {
               color: #111 !important;
               font-weight: 500;
@@ -272,18 +320,16 @@ const ProjectPage = () => {
               background-color: transparent !important;
               transition: color 0.2s ease, border-bottom 0.2s ease;
             }
-
             .custom-tab:hover {
               color: #1b263b !important;
               background-color: transparent !important;
               border: none !important;
             }
-
             .custom-tab.active,
             .custom-tab.active:focus,
             .custom-tab.active:hover {
               border: none !important;
-              border-bottom: 3px solid #1e3a8a !important; /* highlight active tab */
+              border-bottom: 3px solid #1e3a8a !important;
               background-color: transparent !important;
               color: #1e3a8a !important;
             }
@@ -318,13 +364,11 @@ const ProjectPage = () => {
           </Nav>
         </div>
 
-        {/* Outlet for nested routes */}
         <div className="fade-in">
           <Outlet context={{ project, user: currentUser, role: currentUserRole }} />
         </div>
       </Container>
 
-      {/* Modals */}
       <InviteMembersModal
         show={showInviteModal}
         handleClose={() => setShowInviteModal(false)}

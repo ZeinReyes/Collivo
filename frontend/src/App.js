@@ -28,6 +28,7 @@ import ProjectPage from "./pages/project/projectPage";
 import OverviewPage from "./pages/project/overviewPage";
 import MembersPage from "./pages/project/membersPage";
 import TasksPage from "./pages/project/tasksPage";
+import TaskDetails from "./pages/project/taskDetailPage";
 
 // Others
 import "bootstrap/dist/css/bootstrap.min.css";
@@ -78,16 +79,23 @@ function App() {
         <Route index element={<Dashboard />} /> {/* default */}
         <Route path="projects" element={<ProjectsList />} />
 
+        {/* Project Routes (with header/sidebar layout) */}
         <Route path="projects/:id" element={<ProjectPage />}>
           <Route index element={<OverviewPage />} />
           <Route path="members" element={<MembersPage />} />
-          <Route path="tasks/*" element={<TasksPage />} />
+          <Route path="tasks" element={<TasksPage />} />
         </Route>
 
+        {/* Accept Invite */}
         <Route path="invites/:inviteId" element={<AcceptInvite />} />
       </Route>
+
+      {/* ✅ Task Details route OUTSIDE ProjectPage (no project header) */}
+      <Route
+        path="/project-management/projects/:projectId/tasks/:taskId"
+        element={<TaskDetails />}
+      />
     </Routes>
-    
   );
 }
 

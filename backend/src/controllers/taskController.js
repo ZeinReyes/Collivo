@@ -1,159 +1,289 @@
 import Task from "../models/taskModel.js";
 import Project from "../models/projectModel.js";
+import User from "../models/userModel.js";
 
-// CREATE TASK (any member can propose)
+// ======================
+// 📌 Create a task
+// ======================
 export const createTask = async (req, res) => {
   try {
-    const { projectId, title, description, priority, assignees, startDate, dueDate } = req.body;
-    const userId = req.user._id;
+    const { title, description, projectId, assignedTo, dueDate, priority } = req.body;
+    const userId = req.user?._id;
+    if (!userId) return res.status(401).json({ message: "Unauthorized" });
 
-    const newTask = new Task({
-      projectId,
-      title,
-      description,
-      priority,
-      assignees,
-      startDate,
-      dueDate,
-      createdBy: userId,
-      status: "Proposed", // always start as Proposed
-    });
+    const project = await Project.findById(projectId);
+    if (!project) return res.status(404).json({ message: "Project not found." });
 
-    const savedTask = await newTask.save();
-    res.status(201).json(savedTask);
-  } catch (err) {
-    console.error("Error creating task:", err);
-    res.status(500).json({ message: "Failed to create task" });
-  }
-};
-
-// GET TASKS BY PROJECT
-export const getTasksByProject = async (req, res) => {
-  try {
-    const { projectId } = req.query;
-    if (!projectId) return res.status(400).json({ message: "projectId is required" });
-
-    const tasks = await Task.find({ projectId })
-      .populate("createdBy", "fullName email")
-      .populate("assignees", "fullName email")
-      .populate("approvedBy", "fullName email")
-      .sort({ createdAt: -1 });
-
-    res.status(200).json(tasks);
-  } catch (err) {
-    console.error("Error fetching tasks:", err);
-    res.status(500).json({ message: "Failed to fetch tasks" });
-  }
-};
-
-// GET SINGLE TASK
-export const getTaskById = async (req, res) => {
-  try {
-    const task = await Task.findById(req.params.id)
-      .populate("createdBy", "fullName email")
-      .populate("assignees", "fullName email")
-      .populate("approvedBy", "fullName email");
-
-    if (!task) return res.status(404).json({ message: "Task not found" });
-    res.status(200).json(task);
-  } catch (err) {
-    console.error("Error fetching task:", err);
-    res.status(500).json({ message: "Failed to fetch task" });
-  }
-};
-
-// UPDATE TASK (members can update proposed tasks; owner/admin can update any)
-export const updateTask = async (req, res) => {
-  try {
-    const task = await Task.findById(req.params.id);
-    if (!task) return res.status(404).json({ message: "Task not found" });
-
-    const userId = req.user._id;
-    const project = await Project.findById(task.projectId);
-
-    const isOwnerOrAdmin =
-      project.createdBy.toString() === userId.toString() ||
-      project.members.some((m) => m.user.toString() === userId.toString() && ["Admin"].includes(m.role));
-
-    // Members can only update tasks they created if still Proposed
-    if (!isOwnerOrAdmin && task.createdBy.toString() !== userId.toString()) {
-      return res.status(403).json({ message: "Not authorized to update this task" });
+    // Only Owner/Admin can create tasks
+    const currentUserMember = project.members.find((m) => m.user.toString() === userId.toString());
+    if (!currentUserMember || !["Owner", "Admin"].includes(currentUserMember.role)) {
+      return res.status(403).json({ message: "Only Owner/Admin can create tasks." });
     }
 
-    const { title, description, priority, assignees, startDate, dueDate, status } = req.body;
+    // Normalize assignedTo: ensure user IDs are ObjectId strings
+    const taskAssignedTo = (assignedTo || []).map((u) => {
+      if (typeof u === "string") return { user: u, role: "Member" };
+      if (u.userId) return { user: u.userId, role: u.role || "Member" };
+      if (u.user) return { user: u.user, role: u.role || "Member" };
+      return null;
+    }).filter(Boolean);
 
-    if (title !== undefined) task.title = title;
-    if (description !== undefined) task.description = description;
-    if (priority !== undefined) task.priority = priority;
-    if (assignees !== undefined) task.assignees = assignees;
-    if (startDate !== undefined) task.startDate = startDate;
-    if (dueDate !== undefined) task.dueDate = dueDate;
+    const task = await Task.create({
+      title,
+      description,
+      project: projectId,
+      assignedTo: taskAssignedTo,
+      dueDate,
+      priority: priority || "Medium",
+      createdBy: userId,
+    });
 
-    // Only owner/admin can approve/reject
-    if (status && isOwnerOrAdmin) {
-      task.status = status;
-      if (["To Do", "In Progress", "Completed"].includes(status)) {
-        task.approvedBy = userId;
+    await task.populate("assignedTo.user", "fullName email username");
+
+    res.status(201).json({ message: "Task created successfully", task });
+  } catch (error) {
+    console.error("Error creating task:", error);
+    res.status(500).json({ message: "Server error." });
+  }
+};
+
+// ======================
+// 📂 Get tasks for a project
+// ======================
+export const getTasksByProject = async (req, res) => {
+  try {
+    const { projectId } = req.params;
+    const userId = req.user?._id;
+    if (!userId) return res.status(401).json({ message: "Unauthorized" });
+
+    const project = await Project.findById(projectId);
+    if (!project) return res.status(404).json({ message: "Project not found." });
+
+    if (!project.members.some((m) => m.user.toString() === userId.toString())) {
+      return res.status(403).json({ message: "Access denied." });
+    }
+
+    const tasks = await Task.find({ project: projectId })
+      .populate("assignedTo.user", "fullName email username")
+      .populate("submissions.user", "fullName email username"); // ✅ ADD THIS
+
+    res.status(200).json(tasks);
+  } catch (error) {
+    console.error("Error fetching tasks:", error);
+    res.status(500).json({ message: "Server error." });
+  }
+};
+
+// ======================
+// ✏️ Update a task
+// ======================
+export const updateTask = async (req, res) => {
+  try {
+    const { id } = req.params; // taskId
+    const { title, description, assignedTo, dueDate, priority, status } = req.body;
+    const userId = req.user?._id;
+
+    if (!userId) return res.status(401).json({ message: "Unauthorized" });
+
+    const task = await Task.findById(id);
+    if (!task) return res.status(404).json({ message: "Task not found." });
+
+    const project = await Project.findById(task.project);
+    const currentUserMember = project.members.find((m) => m.user.toString() === userId.toString());
+
+    // Role permissions
+    const isOwner = currentUserMember?.role === "Owner";
+    const isAdmin = currentUserMember?.role === "Admin";
+    const isAssignedMember = task.assignedTo.some((a) => a.user.toString() === userId.toString());
+
+    if (!isOwner && !isAdmin && !isAssignedMember) {
+      return res.status(403).json({ message: "Not authorized to update task." });
+    }
+
+    if (title) task.title = title;
+    if (description) task.description = description;
+    if (dueDate) task.dueDate = dueDate;
+    if (priority) task.priority = priority;
+
+    // Only Owner/Admin can update assigned members
+    if (assignedTo && (isOwner || isAdmin)) {
+      const taskAssignedTo = assignedTo.map((u) => {
+        if (typeof u === "string") return { user: u, role: "Member" };
+        if (u.userId) return { user: u.userId, role: u.role || "Member" };
+        if (u.user) return { user: u.user, role: u.role || "Member" };
+        return null;
+      }).filter(Boolean);
+      task.assignedTo = taskAssignedTo;
+    }
+
+    // Status updates
+    if (status) {
+      if (isAssignedMember || isOwner || isAdmin) {
+        if (["To Do", "In Progress", "Subject for Approval"].includes(status)) {
+          task.status = status;
+          if (status === "Subject for Approval") task.completedAt = new Date();
+        }
       }
     }
 
-    const updatedTask = await task.save();
-    res.status(200).json(updatedTask);
-  } catch (err) {
-    console.error("Error updating task:", err);
-    res.status(500).json({ message: "Failed to update task" });
+    await task.save();
+    await task.populate("assignedTo.user", "fullName email username");
+
+    res.status(200).json({ message: "Task updated successfully", task });
+  } catch (error) {
+    console.error("Error updating task:", error);
+    res.status(500).json({ message: "Server error." });
   }
 };
 
-// DELETE TASK
+// ======================
+// ❌ Delete task
+// ======================
 export const deleteTask = async (req, res) => {
   try {
-    const task = await Task.findById(req.params.id);
-    if (!task) return res.status(404).json({ message: "Task not found" });
+    const { id } = req.params;
+    const userId = req.user?._id;
 
-    const userId = req.user._id;
-    const project = await Project.findById(task.projectId);
+    if (!userId) return res.status(401).json({ message: "Unauthorized" });
 
-    const isOwner =
-      project.createdBy.toString() === userId.toString();
+    const task = await Task.findById(id);
+    if (!task) return res.status(404).json({ message: "Task not found." });
 
-    if (!isOwner) return res.status(403).json({ message: "Only owner can delete task" });
+    const project = await Project.findById(task.project);
+    const currentUserMember = project.members.find((m) => m.user.toString() === userId.toString());
 
-    await task.remove();
-    res.status(200).json({ message: "Task deleted successfully" });
-  } catch (err) {
-    console.error("Error deleting task:", err);
-    res.status(500).json({ message: "Failed to delete task" });
+    if (!currentUserMember || currentUserMember.role !== "Owner") {
+      return res.status(403).json({ message: "Only Owner can delete tasks." });
+    }
+
+    await task.deleteOne();
+    res.status(200).json({ message: "Task deleted successfully." });
+  } catch (error) {
+    console.error("Error deleting task:", error);
+    res.status(500).json({ message: "Server error." });
   }
 };
 
-// APPROVE / REJECT TASK (Owner/Admin)
-export const approveTask = async (req, res) => {
+export const submitTask = async (req, res) => {
   try {
-    const task = await Task.findById(req.params.id);
-    if (!task) return res.status(404).json({ message: "Task not found" });
+    const { id } = req.params;
+    const userId = req.user?._id;
+    if (!userId) return res.status(401).json({ message: "Unauthorized" });
 
-    const { status } = req.body; // To Do / In Progress / Completed / Rejected
-    const userId = req.user._id;
-    const project = await Project.findById(task.projectId);
+    const task = await Task.findById(id);
+    if (!task) return res.status(404).json({ message: "Task not found." });
 
-    const isOwnerOrAdmin =
-      project.createdBy.toString() === userId.toString() ||
-      project.members.some((m) => m.user.toString() === userId.toString() && ["Admin"].includes(m.role));
+    const isAssignedMember = task.assignedTo.some(
+      (a) => a.user.toString() === userId.toString()
+    );
+    if (!isAssignedMember)
+      return res
+        .status(403)
+        .json({ message: "Only assigned members can submit." });
 
-    if (!isOwnerOrAdmin) return res.status(403).json({ message: "Not authorized to approve/reject task" });
-
-    if (!["To Do", "In Progress", "Completed", "Rejected"].includes(status)) {
-      return res.status(400).json({ message: "Invalid status" });
+    if (!req.files || req.files.length === 0) {
+      return res
+        .status(400)
+        .json({ message: "At least one attachment is required." });
     }
 
-    task.status = status;
+    // Format uploaded files
+    const uploadedFiles = req.files.map((file) => ({
+      filename: file.originalname,
+      url: `/uploads/${file.filename}`,
+      uploadedAt: new Date(),
+    }));
+
+    // Push new submission to submissions array
+    task.submissions.push({
+      user: userId,
+      notes: req.body.notes || "",
+      attachments: uploadedFiles,
+      createdAt: new Date(),
+    });
+
+    // Update task status
+    task.status = "Subject for Approval";
+    task.completedAt = new Date();
+
+    await task.save();
+    
+    // Populate both assignedTo AND submissions
+    await task.populate("assignedTo.user", "fullName email username");
+    await task.populate("submissions.user", "fullName email username"); // ✅ ADD THIS
+
+    res
+      .status(200)
+      .json({ message: "Task submitted successfully.", task });
+  } catch (error) {
+    console.error("Error submitting task:", error);
+    res.status(500).json({ message: "Server error." });
+  }
+};
+
+// ======================
+// ✅ Approve task
+// ======================
+export const approveTask = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user?._id;
+
+    if (!userId) return res.status(401).json({ message: "Unauthorized" });
+
+    const task = await Task.findById(id);
+    if (!task) return res.status(404).json({ message: "Task not found." });
+
+    const project = await Project.findById(task.project);
+    const currentUserMember = project.members.find(
+      (m) => m.user.toString() === userId.toString()
+    );
+    const isOwner = currentUserMember?.role === "Owner";
+    const isAdmin = currentUserMember?.role === "Admin";
+
+    // ✅ FIXED CONDITION
+    if (!isOwner && !isAdmin)
+      return res.status(403).json({ message: "Only Owner or Admin can approve tasks." });
+
+    task.status = "Approved";
     task.approvedBy = userId;
 
-    const updatedTask = await task.save();
-    res.status(200).json(updatedTask);
-  } catch (err) {
-    console.error("Error approving task:", err);
-    res.status(500).json({ message: "Failed to approve task" });
+    await task.save();
+    await task.populate("assignedTo.user", "fullName email username");
+    await task.populate("submissions.user", "fullName email username");
+    await task.populate("comments.user", "fullName email username");
+
+    res.status(200).json({ message: "Task approved successfully.", task });
+  } catch (error) {
+    console.error("Error approving task:", error);
+    res.status(500).json({ message: "Server error." });
+  }
+};
+
+// ======================
+// 💬 Add comment
+// ======================
+export const addComment = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { message } = req.body;
+    const userId = req.user?._id;
+
+    if (!userId) return res.status(401).json({ message: "Unauthorized" });
+
+    const task = await Task.findById(id);
+    if (!task) return res.status(404).json({ message: "Task not found." });
+
+    task.comments.push({ user: userId, message });
+    await task.save();
+
+    await task.populate("assignedTo.user", "fullName email username");
+    await task.populate("comments.user", "fullName email username"); // ✅ ADD THIS
+    await task.populate("submissions.user", "fullName email username"); // ✅ ADD THIS
+    
+    res.status(200).json({ message: "Comment added successfully", task });
+  } catch (error) {
+    console.error("Error adding comment:", error);
+    res.status(500).json({ message: "Server error." });
   }
 };

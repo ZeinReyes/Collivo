@@ -2,6 +2,7 @@ import express from "express";
 import mongoose from "mongoose";
 import cors from "cors";
 import dotenv from "dotenv";
+import path from "path";
 
 dotenv.config();
 
@@ -18,6 +19,8 @@ app.use(
   })
 );
 app.use(express.json());
+const uploadDir = path.join(process.cwd(), "src", "uploads");
+app.use("/uploads", express.static(uploadDir));
 
 // ==========================
 // 📦 Import route files
@@ -25,8 +28,9 @@ app.use(express.json());
 import userRoute from "./src/routes/userRoutes.js";
 import authRoute from "./src/routes/authRoutes.js";
 import contactRoute from "./src/routes/contactRoutes.js";
-import projectRoute from "./src/routes/projectRoutes.js"; // ✅ NEW
+import projectRoute from "./src/routes/projectRoutes.js";
 import inviteRoutes from "./src/routes/inviteRoutes.js";
+import taskRoutes from "./src/routes/taskRoutes.js"; // ✅ ADD THIS
 
 // ==========================
 // 🧭 Use routes
@@ -34,8 +38,9 @@ import inviteRoutes from "./src/routes/inviteRoutes.js";
 app.use("/api/users", userRoute);
 app.use("/api/auth", authRoute);
 app.use("/api/contact", contactRoute);
-app.use("/api/projects", projectRoute); // ✅ NEW
+app.use("/api/projects", projectRoute);
 app.use("/api/invites", inviteRoutes);
+app.use("/api/tasks", taskRoutes); // ✅ ADD THIS
 
 // ==========================
 // 🗄️ Connect MongoDB

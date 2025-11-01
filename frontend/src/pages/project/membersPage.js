@@ -153,6 +153,12 @@ const MembersPage = () => {
                 <div className="d-flex flex-column gap-3">
                   {normalizedMembers
                     .filter((m) => !m.isOwner)
+                    .sort((a, b) => {
+                      const rank = { owner: 1, admin: 2, member: 3 };
+                      const roleA = a.role?.toLowerCase() || "member";
+                      const roleB = b.role?.toLowerCase() || "member";
+                      return rank[roleA] - rank[roleB];
+                    })
                     .map((member, idx) => (
                       <div
                         key={member.id || idx}
